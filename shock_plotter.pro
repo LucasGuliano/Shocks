@@ -98,7 +98,7 @@ y_error_plot = errorplot(Vm, Vs, Vm_std, Vs_error, /overplot, linestyle='none')
 ; Max velocity
 max_V = max(shocks.V_multi)
 ;Array of integer X values from 0 to maximum value for plotting
-line_x = findgen(max_V)
+line_x = findgen(1000)
 
 ;For shock scrapper pop up, add new datapoint
 if keyword_set(Vm_new) then begin
@@ -133,13 +133,19 @@ if keyword_set(best_fit) then begin
    ; Y = A_intercept + B_slope*x
    line_best_fit = intercept +slope*line_x 
    ;Plot the best fit line
-   best_fit = plot(line_x, line_best_fit, /overplot)
+   best_fit = plot(line_x, line_best_fit, /overplot, color='red')
+   ;label best fit line
+   myText = TEXT(200, 800, 'y ='+strcompress(intercept)+'+('+strcompress(slope)+')x', FONT_COLOR='red', $
+   FONT_SIZE=9, FONT_STYLE='italic', /DATA, TARGET=myPlot)
 endif
 
 ;plot the X = y line and some parameters above and below
 if keyword_set(xy) then begin
    line_y = line_x
-   xy_line = plot(line_x, line_y, /overplot, color='blue')
+   xy_line = plot(line_x, line_y, /overplot, color='blue', linestyle='dashed')
+   ;label Y = X line
+   myText = TEXT(900, 850, 'y = x', FONT_COLOR='blue', $
+   FONT_SIZE=9, FONT_STYLE='italic', /DATA, TARGET=myPlot)
 endif
 
 ;Add in dashed plus and minus regions (NEEDS BETTER HIGH AND LOW VALUES****)

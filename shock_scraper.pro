@@ -11,6 +11,10 @@ PRO shock_scraper, fresh_start=fresh_start, delete=delete, show_plot=show_plot
 ; single.V_single_compress_error = single spacecraft compressability error
 ; shocks.V_single_theta_Bn = single spacecraft theta Bn
 ; shocks.V_single_theta_Bn_error = single spacecraft theta Bn error
+; shocks.V_single_normtheta = single spacecraft normal vector theta
+; shocks.V_single_normtheta_error = spacecraft normal vector theta error
+; shocks.V_single_phi = single spacecraft normal vector phi
+; shocks.V_single_phi_error = single spacecraft normal vector phi error
   
 ;NOTE: Requires remove function to run correctly in IDL, which is part
 ;of SSWIDL
@@ -22,12 +26,12 @@ PRO shock_scraper, fresh_start=fresh_start, delete=delete, show_plot=show_plot
 ;
 ;       delete - delete a particular event from the current file
 ;
-;       show_plot
+;       show_plot - toggle keyword set to display plot of new point added in pop up
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; set the keyword 'fresh_start' to begin new databse and overwrite old
 if keyword_set(fresh_start) then begin
-    shocks = create_struct('ID',[-9999] ,'V_multi', [-9999], 'V_multi_std', [-9999], 'V_single', [-9999], 'V_single_std', [-9999], 'V_single_error', [-9999], 'V_single_compress', [-9999], 'V_single_compress_error', [-9999], 'V_single_theta_Bn', [-9999], 'V_single_theta_Bn_error', [-9999] )
+    shocks = create_struct('ID',[-9999] ,'V_multi', [-9999], 'V_multi_std', [-9999], 'V_single', [-9999], 'V_single_std', [-9999], 'V_single_error', [-9999], 'V_single_compress', [-9999], 'V_single_compress_error', [-9999], 'V_single_theta_Bn', [-9999], 'V_single_theta_Bn_error', [-9999], 'V_single_normtheta', [-9999], 'V_single_normtheta_error', [-9999], 'V_single_phi', [-9999], 'V_single_phi_error', [-9999] )
 endif
 
 ;if not set, will add to the new database
@@ -44,6 +48,11 @@ temp_compress = shocks.V_single_compress
 temp_compress_error = shocks.V_single_compress_error
 temp_theta_Bn = shocks.V_single_theta_Bn
 temp_theta_Bn_error = shocks.V_single_theta_Bn_error
+temp_normtheta = shocks.V_single_normtheta
+temp_normtheta_error = shocks.V_single_normtheta_error
+temp_normphi = shocks.V_single_phi
+temp_normphi_error = shocks.V_single_phi_error
+
 
 ;Restore the current list of shocks and print to user
 print, 'The following shocks have already been added'
@@ -53,6 +62,8 @@ wait, 0.5
 
 ;prompt user for new ID number to add to the database
 new_ID = ''
+
+;if delete is set, move to delete and then quit
 if keyword_set(delete) then begin
     read, new_ID, PROMPT='Enter shock ID to remove: '
     print, 'Removing shock event number: '+new_ID
@@ -67,8 +78,14 @@ if keyword_set(delete) then begin
     remove, [bad_index], temp_Vs_error
     remove, [bad_index], temp_compress
     remove, [bad_index], temp_theta_Bn
+    remove, [bad_index], temp_compress_error
+    remove, [bad_index], temp_theta_Bn_error
+    remove, [bad_index], temp_normtheta
+    remove, [bad_index], temp_normtheta_error
+    remove, [bad_index], temp_normphi
+    remove, [bad_index], temp_normphi_error
     ;Create a new structure with the deleted array
-    shocks = create_struct('ID',temp_ID ,'V_multi', temp_Vm, 'V_multi_std', temp_Vm_std, 'V_single', temp_Vs, 'V_single_std', temp_Vs_std, 'V_single_error', temp_Vs_error, 'V_single_compress', new_compress, 'V_single_compress_error', new_compress_error, 'V_single_theta_Bn',  new_theta_Bn, 'V_single_theta_Bn_error', new_theta_Bn_error)
+    shocks = create_struct('ID',temp_ID ,'V_multi', temp_Vm, 'V_multi_std', temp_Vm_std, 'V_single', temp_Vs, 'V_single_std', temp_Vs_std, 'V_single_error', temp_Vs_error, 'V_single_compress', temp_compress, 'V_single_compress_error', temp_compress_error, 'V_single_theta_Bn',  temp_theta_Bn, 'V_single_theta_Bn_error', temp_theta_Bn_error, 'V_single_normtheta', temp_normtheta , 'V_single_normtheta_error',temp_normtheta_error, 'V_single_phi', temp_normphi, 'V_single_phi_error',  temp_normphi_error)
     ;Save new version
     save, shocks, filename='shock_velocity_data.idl'  
     ;Exit the program after removing
@@ -134,14 +151,16 @@ basic_Vs_error = event_data.RH08.shock_speed.err
 chi_sq = event_data.RH08.CHISQMIN
 dof = event_data.RH08.DOF
 new_compress = event_data.RH08.compression.avg
-basic_compress_error = event_data.RH08.compression.err
+new_compress_error = event_data.RH08.compression.err
 new_theta_Bn = event_data.RH08.theta_bn.avg
-basic_theta_Bn_error = event_data.RH08.theta_bn.err
+new_theta_Bn_error = event_data.RH08.theta_bn.err
+new_normtheta = event_data.RH08.norm_theta.avg
+new_normtheta_error = event_data.RH08.norm_theta.err
+new_normphi = event_data.RH08.norm_phi.avg
+new_normphi_error = event_data.RH08.norm_phi.err
 
 ;Renormalized uncertainty
 new_Vs_error = (basic_Vs_error*dof)/(chi_sq)
-new_compress_error = (basic_compress_error*dof)/(chi_sq)
-new_theta_Bn_error = (basic_theta_Bn_error*dof)/(chi_sq)
 
 ;find the new multi-spacecraft data points
 print, 'Restoring multi-spacecraft file...'
@@ -155,14 +174,17 @@ print, 'The following data will be added:'
 wait, 0.25
 print, 'Event number: '+string(new_ID)
 print, 'Single Spacecraft average velocity  : '+string(new_Vs)
-print, 'Single Spacecraft velocity stddev   : '+string(new_Vs_std)
 print, 'Single Spacecraft renormalized error: '+string(new_Vs_error)
 print, 'Multi Spacecraft average velocity   : '+string(new_Vm)
 print, 'Multi Spacecraft velocity stddev    : '+string(new_Vm_std)
-print, 'Compressability                     : '+string(new_compress)
-print, 'Compressabilit error                : '+string(new_compress_error)
+print, 'Compression Ratio                   : '+string(new_compress)
+print, 'Compression Ratio Error             : '+string(new_compress_error)
 print, 'Theta Bn                            : '+string(new_theta_Bn)
 print, 'Theta Bn error                      : '+string(new_theta_Bn_error)
+print, 'Norm Theta                          : '+string(new_normtheta)
+print, 'Norm Theta Error                    : '+string(new_normtheta_error)
+print, 'Norm Phi                            : '+string(new_normphi)
+print, 'Norm Phi Error                      : '+string(new_normphi_error)
 print, ''
 wait,0.5
 
@@ -178,7 +200,7 @@ if (saver eq 'n') then return
 
 ;if starting fresh, then replace the -9999 value instead of adding
 if keyword_set (fresh_start) then begin
-   shocks = create_struct('ID',new_ID ,'V_multi', new_Vm, 'V_multi_std', new_vm_std, 'V_single', new_Vs, 'V_single_std', new_Vs_std, 'V_single_error', new_Vs_error, 'V_single_compress', new_compress, 'V_single_compress_error', new_compress_error, 'V_single_theta_Bn',  new_theta_Bn, 'V_single_theta_Bn_error', new_theta_Bn_error)
+   shocks = create_struct('ID',new_ID ,'V_multi', new_Vm, 'V_multi_std', new_vm_std, 'V_single', new_Vs, 'V_single_std', new_Vs_std, 'V_single_error', new_Vs_error, 'V_single_compress', new_compress, 'V_single_compress_error', new_compress_error, 'V_single_theta_Bn',  new_theta_Bn, 'V_single_theta_Bn_error', new_theta_Bn_error, 'V_single_normtheta', new_normtheta , 'V_single_normtheta_error',new_normtheta_error, 'V_single_phi', new_normphi, 'V_single_phi_error',  new_normphi_error)
 
 ; If adding to the arrays instead of starting fresh...
 endif else begin
@@ -199,6 +221,10 @@ endif else begin
       temp_theta_Bn[id_index] = new_theta_Bn
       temp_compress_error[id_index] = new_compress_error
       temp_theta_Bn_error[id_index] = new_theta_Bn_error
+      temp_normtheta[id_index] = new_normtheta
+      temp_normtheta_error[id_index] = new_normtheta_error
+      temp_normphi[id_index] = new_normphi
+      temp_normphi_error[id_index] = new_normphi_error
       
 ;rename new array to match format below
       add_ID = temp_ID
@@ -211,6 +237,10 @@ endif else begin
       add_theta_Bn = temp_theta_Bn
       add_compress_error = temp_compress_error
       add_theta_Bn_error = temp_theta_Bn_error
+      add_normtheta = temp_normtheta
+      add_normtheta_error = temp_normtheta_error
+      add_normphi = temp_normphi
+      add_normphi_error = temp_normphi_error 
    endif else begin
 
 ;Add new event data to temporary arrays if not overwritting
@@ -224,6 +254,10 @@ endif else begin
       add_theta_Bn = [temp_theta_Bn, new_theta_Bn]
       add_compress_error = [temp_compress_error, new_compress_error]
       add_theta_Bn_error = [temp_theta_Bn_error, new_theta_Bn_error]
+      add_normtheta = [temp_normtheta, new_normtheta]
+      add_normtheta_error = [temp_normtheta_error, new_normtheta_error]
+      add_normphi = [temp_normphi, new_normphi]
+      add_normphi_error = [temp_normphi_error, new_normphi_error] 
    endelse
 
 ;Sort arrays based on ID number
@@ -238,9 +272,13 @@ endif else begin
    sorted_compress_error = add_compress_error[sort_index]
    sorted_theta_Bn = add_theta_Bn[sort_index]
    sorted_theta_Bn_error = add_theta_Bn_error[sort_index]
+   sorted_normtheta = add_normtheta[sort_index]
+   sorted_normtheta_error = add_normtheta_error[sort_index]
+   sorted_normphi = add_normphi[sort_index]
+   sorted_normphi_error = add_normphi_error[sort_index]
 
    ;Populate the new structure
-   shocks = create_struct('ID',sorted_ID ,'V_multi', sorted_Vm, 'V_multi_std', sorted_Vm_std, 'V_single', sorted_Vs, 'V_single_std', sorted_Vs_std, 'V_single_error', sorted_Vs_error, 'V_single_compress', sorted_compress, 'V_single_compress_error', sorted_compress_error, 'V_single_theta_Bn', sorted_theta_Bn, 'V_single_theta_Bn_error', sorted_theta_Bn_error)
+   shocks = create_struct('ID',sorted_ID ,'V_multi', sorted_Vm, 'V_multi_std', sorted_Vm_std, 'V_single', sorted_Vs, 'V_single_std', sorted_Vs_std, 'V_single_error', sorted_Vs_error, 'V_single_compress', sorted_compress, 'V_single_compress_error', sorted_compress_error, 'V_single_theta_Bn', sorted_theta_Bn, 'V_single_theta_Bn_error', sorted_theta_Bn_error, 'V_single_normtheta', sorted_normtheta , 'V_single_normtheta_error', sorted_normtheta_error, 'V_single_phi', sorted_normphi, 'V_single_phi_error',  sorted_normphi_error)
 ;End of creating new structure from scratch or adding new data
 endelse
 
