@@ -1,0 +1,50 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2639
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 Summary of programs:\
+\
+Shock_db_manager:\
+Program to manage the shock database. \
+Operates on 'Single_and_Multi_SC_Shock_database.idl' file (database file)\
+Running the program brings up a series of options\
+\
+If no current database is found, it will start from scratch with the following options:\
+   (a)dd new entry \'97> add new entry by number (777, 849, etc)\
+   (s)earch for new entries \'97> List all shock files (searches for multi-spacecraft files)\
+   e(x)it the program and SAVE' \'97> exit and save\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 If a current database is found, it will have following options:\
+   (a)dd new entry \'97> add new entry by number (777, 849, etc)\
+   (d)elete entry\'97> Deletes and entry (can\'92t delete the only entry, to modify an entry, delete and re-add)\
+   (i)formation of entry \'97> print out data from entry in database\
+   (s)earch for new entries \'97> List all shock files (searches for multi-spacecraft files)\
+   e(x)it the program and SAVE' \'97> exit and save\
+\
+Will prompt a note for each entry. \
+\
+Program will save database after each addition. \
+Will organize and save final when exiting. \
+Will also automatically generate CSV file\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \
+\
+\
+\
+Shock_db_to_array: \
+Simple function to convert the structure from a shocks.event.data format to an organize shocks.data format to better save to a csv file. Basically puts all the data into an organized sets of arrays to be saved. Automatically called by shock_db_manager at the end and by shock_db_compilier.\
+\
+Returns the organized array to immediately be saved to csv.\
+\
+\
+Shock_db_compiler:\
+Builds database and csv file from a preset list rather than individually. \
+Saves time when building the database to not have to enter each desired number. \
+Runs on list in script and saves database idl file and csv file\
+Can\'92t add notes, automatically adds a generic note\
+\
+}
